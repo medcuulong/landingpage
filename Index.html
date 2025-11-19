@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/styles.css">
+  <style>
+    /* --- CSS CƠ BẢN --- */
+    body { padding: 0; margin: 0; font-family: Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; flex: 1 0 auto; }
+    
+    /* --- CSS HEADER MỚI (Đã tích hợp) --- */
+    .header-container { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      border-bottom: 2px solid #eee; 
+      padding-bottom: 10px; 
+      margin-bottom: 20px; 
+    }
+    
+    /* Chỉnh lại H2 để nằm gọn trong Header và bỏ gạch chân cũ */
+    .header-container h2 { 
+      margin: 0; 
+      padding: 0; 
+      border: none; /* Bỏ viền cũ vì container đã có */
+      font-size: 1.5em;
+      color: #333;
+    }
+
+    .logo-container { display: flex; align-items: center; gap: 15px; }
+    .logo { height: 50px; width: auto; object-fit: contain; max-width: 100px; }
+
+    /* --- CSS THỐNG KÊ --- */
+    .stats-container { display: flex; justify-content: space-around; margin-bottom: 20px; }
+    .stat-card { padding: 20px; border-radius: 8px; text-align: center; color: white; width: 30%; }
+    #stat-total { background-color: #4285F4; }
+    #stat-pending { background-color: #DB4437; }
+    #stat-done { background-color: #0F9D58; }
+    .stat-card h3 { margin: 0; font-size: 2.5em; }
+    .stat-card p { margin: 0; font-size: 1.2em; }
+    
+    /* --- CSS BẢNG & BỘ LỌC --- */
+    .filter-container { margin-bottom: 15px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; word-break: break-word; vertical-align: top; }
+    th { background-color: #f2f2f2; }
+    tr:nth-child(even) { background-color: #f9f9f9; }
+    .status-pending { color: #DB4437; font-weight: bold; }
+    .status-done { color: #0F9D58; font-weight: bold; }
+    #loading { text-align: center; font-size: 1.2em; padding: 20px; }
+    .thumbnail-img { max-width: 80px; height: auto; display: block; margin: 0 auto; cursor: pointer; }
+    
+    /* --- CSS PHÂN TRANG & FOOTER --- */
+    .pagination-container { text-align: center; margin: 20px 0; }
+    .pagination button { padding: 8px 12px; margin: 0 5px; border: 1px solid #ccc; cursor: pointer; border-radius: 5px; background: white; }
+    .pagination button.active { background: #4285F4; color: white; }
+    .footer { text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; font-size: 0.9em; color: #777; padding-bottom: 20px;}
+    
+    /* --- CSS MÀN HÌNH KHÓA (LOGIN) --- */
+    #login-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background-color: #f0f2f5;
+      display: flex; justify-content: center; align-items: center;
+      z-index: 9999;
+    }
+    .login-box {
+      background: white; padding: 40px; border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      text-align: center; width: 320px;
+    }
+    .login-box h3 { margin-top: 0; color: #333; }
+    .login-box input {
+      width: 100%; padding: 12px; margin: 15px 0;
+      border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;
+    }
+    .login-box button {
+      width: 100%; padding: 12px; background-color: #4285F4;
+      color: white; border: none; border-radius: 4px;
+      font-size: 16px; cursor: pointer; transition: background 0.3s;
+    }
+    .login-box button:hover { background-color: #357ae8; }
+    .login-error { color: #DB4437; font-size: 0.9em; margin-top: 10px; display: none; }
+    
+    #main-content { display: none; }
+  </style>
+</head>
+
+<body>
+  <div id="login-overlay">
+    <div class="login-box">
+      <h3>Bảo mật truy cập</h3>
+      <p style="color:#666; font-size: 0.9em;">Vui lòng nhập mật khẩu để xem dữ liệu.</p>
+      <input type="password" id="password-input" placeholder="Nhập mật khẩu..." onkeypress="handleEnter(event)">
+      <button id="btn-login" onclick="verifyPassword()">Truy cập</button>
+      <div id="login-msg" class="login-error">Mật khẩu không đúng!</div>
+    </div>
+  </div>
+
+  <div id="main-content">
+    <div class="container">
+      
+      <div class="header-container">
+        <h2>Công Ty TNHH Phòng Khám Đa Khoa Cửu Long<br><span style="font-size: 0.8em; font-weight: normal;">VNPT Sóc Trăng</span></h2>
+        <div class="logo-container">
+          <img src="https://i.postimg.cc/mD4W5SHV/Logo-PKCL-OK.png" alt="Logo phong kham" class="logo">
+          <img src="https://inkythuatso.com/uploads/images/2021/11/logo-vnpt-inkythuatso-01-01-14-56-59.jpg" alt="Logo VNPT" class="logo">
+        </div>
+      </div>
+
+      <div class="stats-container">
+        <div class="stat-card" id="stat-total">
+          <h3 id="total-count">0</h3>
+          <p>Tổng số</p>
+        </div>
+        <div class="stat-card" id="stat-pending">
+          <h3 id="pending-count">0</h3>
+          <p>Đang xử lý</p>
+        </div>
+        <div class="stat-card" id="stat-done">
+          <h3 id="done-count">0</h3>
+          <p>Đã hoàn thành</p>
+        </div>
+      </div>
+
+      <div class="filter-container">
+        <label for="status-filter">Lọc theo trạng thái:</label>
+        <select id="status-filter">
+          <option value="all">Tất cả</option>
+          <option value="Đang xử lý">Đang xử lý</option>
+          <option value="Đã hoàn thành">Đã hoàn thành</option>
+        </select>
+      </div>
+
+      <table id="problem-table">
+        <thead>
+          <tr>
+            <th style="width: 10%;">Ngày nhập</th>
+            <th style="width: 15%;">Tiêu đề</th>
+            <th style="width: 25%;">Miêu tả</th>
+            <th style="width: 10%;">Hình ảnh</th>
+            <th style="width: 15%;">Phân loại</th>
+            <th style="width: 10%;">Trạng thái</th>
+            <th style="width: 15%;">Ngày HT</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+
+      <div id="loading">Đang tải dữ liệu...</div>
+
+      <div class="pagination-container">
+        <div id="pagination" class="pagination"></div>
+      </div>
+
+      <footer class="footer">
+        © Nguyễn Minh Nhật - PKĐK CỬU LONG
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    let allData = [];
+    let rowsPerPage = 10;
+    let currentPage = 1;
+
+    // --- LOGIC MẬT KHẨU ---
+    function handleEnter(e) {
+      if(e.key === 'Enter') verifyPassword();
+    }
+
+    function verifyPassword() {
+      const passInput = document.getElementById("password-input").value;
+      const btn = document.getElementById("btn-login");
+      const msg = document.getElementById("login-msg");
+      
+      btn.disabled = true;
+      btn.textContent = "Đang kiểm tra...";
+      msg.style.display = "none";
+
+      google.script.run
+        .withSuccessHandler(function(isValid) {
+          if (isValid) {
+             document.getElementById("login-overlay").style.display = "none";
+             document.getElementById("main-content").style.display = "block";
+             loadData(); 
+          } else {
+             msg.style.display = "block";
+             btn.disabled = false;
+             btn.textContent = "Truy cập";
+          }
+        })
+        .withFailureHandler(function(err) {
+           msg.textContent = "Lỗi: " + err.message;
+           msg.style.display = "block";
+           btn.disabled = false;
+           btn.textContent = "Truy cập";
+        })
+        .checkPassword(passInput);
+    }
+
+    // --- LOGIC CHÍNH ---
+    document.addEventListener("DOMContentLoaded", function() {
+      document.getElementById("status-filter").addEventListener("change", filterTable);
+    });
+
+    function loadData() {
+      document.getElementById("loading").style.display = "block";
+      google.script.run.withSuccessHandler(onDataReceived).withFailureHandler(onFailure).getProblemData();
+    }
+
+    function onDataReceived(data) {
+      document.getElementById("loading").style.display = "none";
+      if (!data || data.length === 0) {
+        document.getElementById("table-body").innerHTML = '<tr><td colspan="7" style="text-align:center;">Không có dữ liệu</td></tr>';
+        return;
+      }
+      allData = data;
+      updateStats(allData);
+      renderPagination(allData);
+      buildTable(allData);
+    }
+
+    function updateStats(data) {
+      document.getElementById("total-count").textContent = data.length;
+      document.getElementById("pending-count").textContent = data.filter(r => r[5] === 'Đang xử lý').length;
+      document.getElementById("done-count").textContent = data.filter(r => r[5] === 'Đã hoàn thành').length;
+    }
+
+    function buildTable(data) {
+      const tbody = document.getElementById("table-body");
+      tbody.innerHTML = "";
+      let start = (currentPage - 1) * rowsPerPage;
+      let end = start + rowsPerPage;
+      let paginatedData = data.slice(start, end);
+
+      if (paginatedData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Không có dữ liệu</td></tr>';
+        return;
+      }
+
+      paginatedData.forEach(row => {
+        const tr = document.createElement("tr");
+
+        const dateCell = document.createElement("td");
+        dateCell.textContent = row[0] ? new Date(row[0]).toLocaleString('vi-VN') : '';
+        tr.appendChild(dateCell);
+
+        const titleCell = document.createElement("td");
+        titleCell.textContent = row[1];
+        tr.appendChild(titleCell);
+
+        const descCell = document.createElement("td");
+        descCell.textContent = row[2];
+        tr.appendChild(descCell);
+
+        const imageCell = document.createElement("td");
+        imageCell.style.textAlign = "center";
+
+        const img = document.createElement("img");
+        img.src = "https://atlas-content-cdn.pixelsquid.com/assets_v2/331/3314138166838957345/previews/G03-200x200.jpg";
+        img.className = "thumbnail-img";
+        img.style.width = "60px";
+
+        if (row[3]) {
+          img.onclick = () => window.open(row[3], "_blank");
+          imageCell.appendChild(img);
+          const viewText = document.createElement("span");
+          viewText.textContent = "Xem";
+          viewText.style.color = "#007BFF";
+          viewText.style.cursor = "pointer";
+          viewText.style.display = "block";
+          viewText.onclick = () => window.open(row[3], "_blank");
+          imageCell.appendChild(viewText);
+        } else {
+          img.style.opacity = "0.5";
+          imageCell.appendChild(img);
+        }
+        tr.appendChild(imageCell);
+
+        const typeCell = document.createElement("td");
+        typeCell.textContent = row[4];
+        tr.appendChild(typeCell);
+
+        const statusCell = document.createElement("td");
+        statusCell.textContent = row[5];
+        statusCell.className = row[5] === 'Đang xử lý' ? 'status-pending' : 'status-done';
+        tr.appendChild(statusCell);
+
+        const completedDateCell = document.createElement("td");
+        completedDateCell.textContent = row[6] ? new Date(row[6]).toLocaleString('vi-VN') : '';
+        tr.appendChild(completedDateCell);
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    function filterTable() {
+      const status = document.getElementById("status-filter").value;
+      currentPage = 1;
+      let filtered = status === "all" ? allData : allData.filter(r => r[5] === status);
+      renderPagination(filtered);
+      buildTable(filtered);
+    }
+
+    function renderPagination(data) {
+      const paginationDiv = document.getElementById("pagination");
+      paginationDiv.innerHTML = "";
+      let totalPages = Math.ceil(data.length / rowsPerPage);
+      for (let i = 1; i <= totalPages; i++) {
+        const button = document.createElement("button");
+        button.textContent = i;
+        if (i === currentPage) button.classList.add("active");
+        button.onclick = () => { currentPage = i; buildTable(data); renderPagination(data); };
+        paginationDiv.appendChild(button);
+      }
+    }
+
+    function onFailure(error) {
+      document.getElementById("loading").textContent = "Lỗi: " + error.message;
+      document.getElementById("loading").style.color = "red";
+    }
+  </script>
+</body>
+</html>
